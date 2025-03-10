@@ -5,10 +5,11 @@ import cv2
 class BaseDeDatos:
     def __init__(self):
         self.conexion = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="Sebastian0423.",
-            port=3306
+            host="interchange.proxy.rlwy.net",  # Servidor de Railway
+            user="root",  # Usuario de la BD
+            password="EtyyxisOoQYnxGYdHxulHnJFvHSOFBOe",  # Contraseña de la BD
+            database="railway",  # Nombre de la BD en Railway
+            port=26224  # Puerto asignado por Railway
         )
         self.cursor = self.conexion.cursor()
 
