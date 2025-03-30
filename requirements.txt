@@ -1,4 +1,4 @@
 mysql-connector-python
 numpy
-opencv-python
 mediapipe
+opencv-python-headless==4.7.0.72
