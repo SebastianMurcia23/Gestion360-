@@ -7,7 +7,7 @@ import numpy as np
 # Configurar página
 st.set_page_config(page_title="Sistema de Reconocimiento Facial", page_icon="😎", layout="centered")
 
-# Agregar CSS personalizado
+
 st.markdown("""
     <style>
         .title {
@@ -37,11 +37,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Inicializar base de datos y reconocimiento facial
+
 bd = BaseDeDatos()
 reconocimiento_facial = ReconocimientoFacial()
 
-# Manejo de sesión
+
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
@@ -62,7 +62,7 @@ if not st.session_state.autenticado:
                 st.error("Usuario o contraseña incorrectos")
         st.markdown("</div>", unsafe_allow_html=True)
 
-# --- Módulos del sistema ---
+
 else:
     st.sidebar.title("Menú")
     pestañas = st.tabs(["Reconocimiento Facial", "Módulo 2", "Módulo 3"])

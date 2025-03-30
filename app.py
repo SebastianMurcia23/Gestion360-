@@ -76,10 +76,11 @@ else:
             tipo_doc = st.selectbox("Tipo de Documento", ["Seleccionar Tipo de Documento","Cédula", "Tarjeta de Identidad"])
             num_doc = st.text_input("Número de Documento")
 
+        # En la sección de registro de usuario:
             if st.button("📸 Capturar Rostro"):
-                rostro = reconocimiento_facial.capturar_rostro("Registrando...")
-                if rostro:
-                    bd.guardar_usuario(nombre, tipo_doc, num_doc, rostro)
+                encoding = reconocimiento_facial.capturar_rostro("Registrando...")
+                if encoding:
+                    bd.guardar_usuario(nombre, tipo_doc, num_doc, encoding)
                     st.success(f"Usuario {nombre} registrado correctamente.")
                 else:
                     st.error("No se pudo registrar el usuario.")
