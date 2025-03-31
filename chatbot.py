@@ -112,6 +112,37 @@ class AsistenteVirtual:
         # Mensaje de voz inicial
         self.hablar("Sistemas activados. ¿En qué puedo ayudar?")
 
+        # chatbot.py (modificación)
+    def procesar_pensamiento_streamlit(self, consulta):
+        if "salir" in consulta or "terminar" in consulta:
+            return "Hasta luego. Cerrando sistemas."
+        
+        if "aprende que" in consulta:
+            try:
+                partes = consulta.split("aprende que")
+                pregunta = partes[1].split("responde")[0].strip()
+                respuesta = partes[1].split("responde")[1].strip()
+                
+                self.base_conocimiento[pregunta] = respuesta
+                self.guardar_conocimiento()
+                
+                return f"Entendido. He aprendido que cuando preguntan '{pregunta}' debo responder '{respuesta}'"
+            except:
+                return "No entendí el formato. Escribe: aprende que [pregunta] responde [respuesta]"
+        
+        for pregunta, respuesta in self.base_conocimiento.items():
+            if pregunta in consulta:
+                return respuesta
+        
+        respuestas_predeterminadas = [
+            "No estoy seguro de entender completamente su pregunta.",
+            "Podría necesitar más información para responder eso adecuadamente.",
+            "Mis sistemas no tienen una respuesta programada para esa consulta.",
+            "¿Podría reformular la pregunta?"
+        ]
+        
+        return random.choice(respuestas_predeterminadas)
+
 def main():
 
     asistente = AsistenteVirtual()  # Crea instancia del asistente
