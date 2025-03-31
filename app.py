@@ -73,22 +73,23 @@ else:
         if menu == "Registrar usuario":
             st.subheader("Registrar Usuario")
             nombre = st.text_input("Nombre")
-            tipo_doc = st.selectbox("Tipo de Documento", ["Seleccionar Tipo de Documento","Cédula", "Tarjeta de Identidad"])
+            tipo_doc = st.selectbox("Tipo de Documento", ["Cédula", "Tarjeta de Identidad"])
             num_doc = st.text_input("Número de Documento")
 
-        # En la sección de registro de usuario:
             if st.button("📸 Capturar Rostro"):
-                encoding = reconocimiento_facial.capturar_rostro("Registrando...")
+                reconocimiento = ReconocimientoFacial()
+                encoding = reconocimiento.capturar_rostro("Registrando...")
                 if encoding:
                     bd.guardar_usuario(nombre, tipo_doc, num_doc, encoding)
                     st.success(f"Usuario {nombre} registrado correctamente.")
                 else:
-                    st.error("No se pudo registrar el usuario.")
+                    st.error("No se detectó un rostro válido.")
 
         elif menu == "Ingresar a turno":
             st.subheader("Verificación de Usuario")
             if st.button("🔍 Verificar Rostro"):
-                nombre, num_doc = reconocimiento_facial.verificar_usuario(bd)
+                reconocimiento = ReconocimientoFacial()
+                nombre, num_doc = reconocimiento.verificar_usuario(bd)
                 if nombre:
                     st.success(f"Bienvenido {nombre}, documento: {num_doc}")
                 else:
