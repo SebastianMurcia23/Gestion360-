@@ -1,20 +1,22 @@
 import cv2
 import face_recognition
 import numpy as np
+import streamlit as st
 
 class ReconocimientoFacial:
     def __init__(self):
-        pass
-
+        self.cap = cv2.VideoCapture(0)
+    
     def capturar_rostro(self, mensaje=""):
-        cap = cv2.VideoCapture(0)
         encoding = None
-
-        while True:
-            ret, frame = cap.read()
+        frame_placeholder = st.empty()
+        stop_button = st.button("Detener Captura")
+        
+        while self.cap.isOpened() and not stop_button:
+            ret, frame = self.cap.read()
             if not ret:
                 break
-
+            
             # Detectar rostros
             face_locations = face_recognition.face_locations(frame)
             
@@ -25,16 +27,18 @@ class ReconocimientoFacial:
                 # Generar encoding
                 face_encoding = face_recognition.face_encodings(frame, [face_locations[0]])[0]
                 encoding = face_encoding.tobytes()
-
-            cv2.putText(frame, mensaje, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-            cv2.imshow('Reconocimiento Facial', frame)
-
-            if cv2.waitKey(1) & 0xFF == ord('q') and encoding is not None:
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()
-        return encoding if encoding else None
+                frame = cv2.putText(frame, mensaje, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            
+            # Convertir BGR a RGB y mostrar en Streamlit
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_placeholder.image(frame_rgb, channels="RGB")
+            
+            if encoding:
+                self.cap.release()
+                return encoding
+        
+        self.cap.release()
+        return None
 
     def verificar_usuario(self, bd):
         encoding = self.capturar_rostro("Verificando usuario...")
