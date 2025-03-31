@@ -1,4 +1,5 @@
-mysql-connector-python
+opencv-python
 numpy
-mediapipe
-opencv-python-headless==4.7.0.72
+face-recognition
+mysql-connector-python
+streamlit
