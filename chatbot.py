@@ -4,7 +4,10 @@ import random    # Para selección aleatoria de respuestas
 import json      # Para manejar el archivo de conocimiento
 import os        # Para operaciones del sistema de archivos
 from pyfiglet import Figlet  # Para mostrar texto en ASCII
-from termcolor import colored  # Para pintar la salida en terminal
+from termcolor import colored
+
+from MySql import BaseDeDatos
+from reconocimiento_facial import ReconocimientoFacial  # Para pintar la salida en terminal
 
 class AsistenteVirtual:
     

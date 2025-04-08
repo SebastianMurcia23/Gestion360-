@@ -52,23 +52,30 @@ if not st.session_state.autenticado:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
         usuario = st.text_input("Usuario", key="user_input")
         contraseña = st.text_input("Contraseña", type="password", key="password_input")
-        if st.button("Iniciar Sesión"):
-            if (usuario == "admin" and contraseña == "1234"):  
-                st.session_state.autenticado = True
-                st.success("Acceso concedido")
-                st.rerun()
-            else:
-                st.error("Usuario o contraseña incorrectos")
-        st.markdown("</div>", unsafe_allow_html=True)
-        if st.button("Face Id"):
-                reconocimiento = ReconocimientoFacial()
-                nombre, num_doc = reconocimiento.verificar_usuario(bd)
-                if nombre:
+        
+        # Botones en columnas
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if st.button("Iniciar Sesión"):
+                if (usuario == "admin" and contraseña == "1234"):  
                     st.session_state.autenticado = True
-                    st.success(f"Bienvenido {nombre}, documento: {num_doc}")
+                    st.success("Acceso concedido")
                     st.rerun()
                 else:
-                    st.error("Usuario no válido.")
+                    st.error("Usuario o contraseña incorrectos")
+                    
+            if st.button("Face Id"):
+                with st.spinner('Detectando rostro...'):  # Feedback visual
+                    reconocimiento = ReconocimientoFacial()
+                    nombre, num_doc = reconocimiento.verificar_usuario(bd, mostrar_video=False)
+                    if nombre:
+                        st.session_state.autenticado = True
+                        st.success(f"Bienvenido {nombre}, documento: {num_doc}")
+                        st.rerun()
+                    else:
+                        st.error("Usuario no válido o rostro no detectado")
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Menú Principal ---
 else:
@@ -131,7 +138,7 @@ else:
         # Sección de grabación de voz
         col1, col2 = st.columns([1, 4])
         with col1:
-            audio = mic_recorder(start_prompt="🎤 Grabar", stop_prompt="⏹ Detener", key='recorder')
+            audio = mic_recorder(start_prompt="🎤 Hablar", stop_prompt="⏹ Detener", key='recorder')
         with col2:
             texto_manual = st.text_input("Escribe tu mensaje:", key='text_input')
 
