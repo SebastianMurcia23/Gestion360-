@@ -53,13 +53,22 @@ if not st.session_state.autenticado:
         usuario = st.text_input("Usuario", key="user_input")
         contraseña = st.text_input("Contraseña", type="password", key="password_input")
         if st.button("Iniciar Sesión"):
-            if usuario == "admin" and contraseña == "1234":  
+            if (usuario == "admin" and contraseña == "1234"):  
                 st.session_state.autenticado = True
                 st.success("Acceso concedido")
                 st.rerun()
             else:
                 st.error("Usuario o contraseña incorrectos")
         st.markdown("</div>", unsafe_allow_html=True)
+        if st.button("Face Id"):
+                reconocimiento = ReconocimientoFacial()
+                nombre, num_doc = reconocimiento.verificar_usuario(bd)
+                if nombre:
+                    st.session_state.autenticado = True
+                    st.success(f"Bienvenido {nombre}, documento: {num_doc}")
+                    st.rerun()
+                else:
+                    st.error("Usuario no válido.")
 
 # --- Menú Principal ---
 else:
