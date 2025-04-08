@@ -46,4 +46,7 @@ class ReconocimientoFacial:
 
     def verificar_usuario(self, bd, mostrar_video=True):
         encoding = self.capturar_rostro("Verificando usuario..." if mostrar_video else "", mostrar_video)
-        return bd.buscar_usuario(encoding) if encoding else (None, None)
+        if encoding:
+            nombre, num_doc, rol = bd.buscar_usuario(encoding)
+            return nombre, num_doc, rol
+        return None, None, None

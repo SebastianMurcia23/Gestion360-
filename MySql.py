@@ -22,37 +22,39 @@ class BaseDeDatos:
             nombre VARCHAR(100),
             tipo_documento VARCHAR(50),
             numero_documento VARCHAR(50) UNIQUE,
-            encoding LONGBLOB
+            encoding LONGBLOB,
+            rol ENUM('usuario', 'administrador') DEFAULT 'usuario'
         )
         """
         self.cursor.execute(query)
         self.conexion.commit()
 
-    def guardar_usuario(self, nombre, tipo_documento, numero_documento, encoding):
+    def guardar_usuario(self, nombre, tipo_documento, numero_documento, encoding, rol='usuario'):
         try:
-            query = "INSERT INTO usuarios (nombre, tipo_documento, numero_documento, encoding) VALUES (%s, %s, %s, %s)"
-            self.cursor.execute(query, (nombre, tipo_documento, numero_documento, encoding))
+            query = """INSERT INTO usuarios 
+                    (nombre, tipo_documento, numero_documento, encoding, rol) 
+                    VALUES (%s, %s, %s, %s, %s)"""
+            self.cursor.execute(query, (nombre, tipo_documento, numero_documento, encoding, rol))
             self.conexion.commit()
         except mysql.connector.Error as err:
             print(f"Error al guardar usuario: {err}")
 
     def buscar_usuario(self, encoding_nuevo):
         try:
-            query = "SELECT nombre, numero_documento, encoding FROM usuarios"
+            query = "SELECT nombre, numero_documento, encoding, rol FROM usuarios"
             self.cursor.execute(query)
             usuarios = self.cursor.fetchall()
             
             encoding_nuevo = np.frombuffer(encoding_nuevo, dtype=np.float64)
             
-            for nombre, num_doc, encoding_guardado in usuarios:
+            for nombre, num_doc, encoding_guardado, rol in usuarios:
                 encoding_db = np.frombuffer(encoding_guardado, dtype=np.float64)
                 
-                # Comparar embeddings
                 distancia = face_recognition.face_distance([encoding_db], encoding_nuevo)[0]
-                if distancia < 0.6:  # Umbral ajustable
-                    return nombre, num_doc
+                if distancia < 0.6:
+                    return nombre, num_doc, rol 
                     
-            return None, None
+            return None, None, None
         except Exception as e:
             print(f"Error en búsqueda: {e}")
-            return None, None
+            return None, None, None
