@@ -10,7 +10,7 @@ class ReconocimientoFacial:
     def capturar_rostro(self, mensaje=""):
         encoding = None
         frame_placeholder = st.empty()
-        stop_button = st.button("Detener Captura")
+        stop_button = st.button("Limpiar Captura")
         
         while self.cap.isOpened() and not stop_button:
             ret, frame = self.cap.read()

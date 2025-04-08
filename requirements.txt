@@ -1,5 +1,4 @@
-opencv-python
-numpy
-face-recognition
 mysql-connector-python
-streamlit
+numpy
+opencv-python
+mediapipe
