@@ -1,4 +1,4 @@
-import pyttsx3  # Para la síntesis de voz
+import pyttsx3  # Para la voz
 import time      # Para manejar tiempos 
 import random    # Para selección aleatoria de respuestas
 import json      # Para manejar el archivo de conocimiento
@@ -10,7 +10,7 @@ class AsistenteVirtual:
     
     def __init__(self):
 
-        self.motor_voz = pyttsx3.init()  # Inicializa el motor de síntesis de voz
+        self.motor_voz = pyttsx3.init()  # Inicializa la voz
         self.base_conocimiento = {}      # Diccionario para almacenar preguntas y respuestas
         self.cargar_conocimiento()       # Carga el conocimiento desde archivo
         
@@ -112,6 +112,37 @@ class AsistenteVirtual:
         # Mensaje de voz inicial
         self.hablar("Sistemas activados. ¿En qué puedo ayudar?")
 
+        # chatbot.py (modificación)
+    def procesar_pensamiento_streamlit(self, consulta):
+        if "salir" in consulta or "terminar" in consulta:
+            return "Hasta luego. Cerrando sistemas."
+        
+        if "aprende que" in consulta:
+            try:
+                partes = consulta.split("aprende que")
+                pregunta = partes[1].split("responde")[0].strip()
+                respuesta = partes[1].split("responde")[1].strip()
+                
+                self.base_conocimiento[pregunta] = respuesta
+                self.guardar_conocimiento()
+                
+                return f"Entendido. He aprendido que cuando preguntan '{pregunta}' debo responder '{respuesta}'"
+            except:
+                return "No entendí el formato. Escribe: aprende que [pregunta] responde [respuesta]"
+        
+        for pregunta, respuesta in self.base_conocimiento.items():
+            if pregunta in consulta:
+                return respuesta
+        
+        respuestas_predeterminadas = [
+            "No estoy seguro de entender completamente su pregunta.",
+            "Podría necesitar más información para responder eso adecuadamente.",
+            "Mis sistemas no tienen una respuesta programada para esa consulta.",
+            "¿Podría reformular la pregunta?"
+        ]
+        
+        return random.choice(respuestas_predeterminadas)
+
 def main():
 
     asistente = AsistenteVirtual()  # Crea instancia del asistente
@@ -121,7 +152,7 @@ def main():
     while en_ejecucion:
         consulta = asistente.obtener_entrada()  # Obtiene entrada del usuario
         if consulta:
-            en_ejecucion = asistente.procesar_pensamiento(consulta)  # Procesa la entrada
+            en_ejecucion = asistente.procesar_pensamiento_streamlit(consulta)  # Procesa la entrada
 
 
 if __name__ == "__main__":
