@@ -1,5 +1,13 @@
-opencv-python
+streamlit
+opencv-python-headless
 numpy
 face-recognition
 mysql-connector-python
-streamlit
+gTTS
+SpeechRecognition
+streamlit-mic-recorder
+pyttsx3
+pyfiglet
+termcolor
+python-dotenv
+protobuf 

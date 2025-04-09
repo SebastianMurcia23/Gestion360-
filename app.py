@@ -6,7 +6,6 @@ from gtts import gTTS
 from io import BytesIO
 import speech_recognition as sr
 from streamlit_mic_recorder import mic_recorder
-
 st.set_page_config(page_title="Gestión360 ", page_icon="😎", layout="centered")
 
 st.markdown("""
@@ -140,25 +139,12 @@ else:
                         st.markdown(f"**360:** {msg['contenido']}")
 
             # Sección de grabación de voz
-            col1, col2 = st.columns([1, 4])
+            col1 = st.columns([1, 4])
             with col1:
-                audio = mic_recorder(start_prompt="🎤 Hablar", stop_prompt="⏹ Detener", key='recorder')
-            with col2:
                 texto_manual = st.text_input("Escribe tu mensaje:", key='text_input')
 
-            # Procesar entrada de voz
-            if audio:
-                try:
-                    # Convertir audio a texto
-                    recognizer = sr.Recognizer()
-                    audio_data = sr.AudioData(audio['bytes'], audio['sample_rate'], audio['sample_width'])
-                    texto = recognizer.recognize_google(audio_data, language='es-ES')
-                    texto_manual = texto  # Actualizar el campo de texto
-                except Exception as e:
-                    st.error("Error al procesar el audio. Intenta nuevamente.")
-
             # Botón de enviar
-            if st.button("Enviar") and (texto_manual or audio):
+            if st.button("Enviar") and (texto_manual):
                 consulta = texto_manual.strip().lower()
                 
                 if consulta:
