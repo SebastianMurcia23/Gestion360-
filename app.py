@@ -1,5 +1,4 @@
 import streamlit as st
-from chatbot import AsistenteVirtual
 from reconocimiento_facial import ReconocimientoFacial
 from MySql import BaseDeDatos
 from gtts import gTTS
@@ -121,53 +120,6 @@ else:
 
         elif pestaña == "ChatBot":
             st.subheader("Asistente Virtual 360")
-            # Inicializar el asistente en el estado de sesión
-            if 'asistente' not in st.session_state:
-                st.session_state.asistente = AsistenteVirtual()
-                st.session_state.asistente.animacion_inicio()
-                st.session_state.mensajes = []
-
-            # Contenedor para el historial del chat
-            chat_container = st.container()
-
-            # Mostrar mensajes anteriores
-            with chat_container:
-                for msg in st.session_state.mensajes:
-                    if msg['tipo'] == 'usuario':
-                        st.markdown(f"**Tú:** {msg['contenido']}")
-                    else:
-                        st.markdown(f"**360:** {msg['contenido']}")
-
-            # Sección de grabación de voz
-            col1 = st.columns([1, 4])
-            with col1:
-                texto_manual = st.text_input("Escribe tu mensaje:", key='text_input')
-
-            # Botón de enviar
-            if st.button("Enviar") and (texto_manual):
-                consulta = texto_manual.strip().lower()
-                
-                if consulta:
-                    # Agregar mensaje del usuario
-                    st.session_state.mensajes.append({'tipo': 'usuario', 'contenido': consulta})
-                    
-                    # Procesar la consulta
-                    respuesta = st.session_state.asistente.procesar_pensamiento_streamlit(consulta)
-                    
-                    # Agregar respuesta del asistente
-                    st.session_state.mensajes.append({'tipo': 'asistente', 'contenido': respuesta})
-                    
-                    # Generar audio de respuesta
-                    tts = gTTS(text=respuesta, lang='es')
-                    audio_bytes = BytesIO()
-                    tts.write_to_fp(audio_bytes)
-                    audio_bytes.seek(0)
-                    
-                    # Reproducir audio
-                    st.audio(audio_bytes, format='audio/wav')
-                    
-                    # Forzar actualización del contenedor
-                    st.rerun()
 
         elif pestaña == "Módulo 3":
             st.subheader("Módulo 3")
