@@ -120,6 +120,149 @@ else:
 
         elif pestaña == "ChatBot":
             st.subheader("Asistente Virtual 360")
+            
+            # Definición de menús y respuestas
+            menus = {
+                "principal": {
+                    "titulo": "📋 Menú Principal - Seleccione una opción:",
+                    "opciones": {
+                        "1": {"texto": "Consultar horarios 📅", "accion": "menu", "destino": "horarios"},
+                        "2": {"texto": "Soporte técnico 🛠️", "accion": "menu", "destino": "soporte"},
+                        "3": {"texto": "Información general ℹ️", "accion": "respuesta", "texto_respuesta": "🌟 Somos Gestión360, su solución integral."},
+                        "4": {"texto": "Contacto 📧", "accion": "respuesta", "texto_respuesta": "📩 Email: soporte@gestion360.com\n📞 Teléfono: +57 123 456 7890"}
+                    }
+                },
+                "horarios": {
+                    "titulo": "⏰ Gestión de Horarios:",
+                    "opciones": {
+                        "1": {"texto": "Ver mi horario 👀", "accion": "respuesta", "texto_respuesta": "🕒 Su horario actual es: Lunes a Viernes de 8:00 AM a 5:00 PM"},
+                        "2": {"texto": "Solicitar cambio 🔄", "accion": "respuesta", "texto_respuesta": "📤 Envíe su solicitud a RRHH al email: rrhh@gestion360.com"},
+                        "3": {"texto": "Registrar horas extras ⏳", "accion": "respuesta", "texto_respuesta": "⏱️ Use el formulario del módulo de Recursos Humanos"},
+                        "0": {"texto": "Volver al menú principal ↩️", "accion": "menu", "destino": "principal"}
+                    }
+                },
+                "soporte": {
+                    "titulo": "🖥️ Soporte Técnico:",
+                    "opciones": {
+                        "1": {"texto": "Reportar problema 🚨", "accion": "respuesta", "texto_respuesta": "✅ Ticket creado (#00123). Nuestro equipo lo contactará en 24h"},
+                        "2": {"texto": "Estado de ticket 🔍", "accion": "respuesta", "texto_respuesta": "🔄 Ingrese su número de ticket para consultar el estado"},
+                        "3": {"texto": "Urgencias ⚠️", "accion": "respuesta", "texto_respuesta": "📞 Contacte inmediatamente al: +57 987 654 3210"},
+                        "0": {"texto": "Volver al menú principal ↩️", "accion": "menu", "destino": "principal"}
+                    }
+                }
+            }
+
+            # Inicializar estado del chatbot
+            if 'chatbot' not in st.session_state:
+                st.session_state.chatbot = {
+                    'menu_actual': 'principal',
+                    'historial': [
+                        {'tipo': 'sistema', 'contenido': '¡Bienvenido! Soy su asistente virtual. ¿En qué puedo ayudarle?'}
+                    ]
+                }
+
+            # Estilos CSS para el chat
+            st.markdown("""
+                <style>
+                    .chat-container {
+                        background-color: #f9f9f9;
+                        border-radius: 10px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .user-message {
+                        background-color: #e3f2fd;
+                        padding: 10px;
+                        border-radius: 10px;
+                        margin: 5px 0;
+                        max-width: 80%;
+                        float: right;
+                        clear: both;
+                    }
+                    .bot-message {
+                        background-color: #ffffff;
+                        padding: 10px;
+                        border-radius: 10px;
+                        margin: 5px 0;
+                        max-width: 80%;
+                        float: left;
+                        clear: both;
+                        border: 1px solid #eee;
+                    }
+                </style>
+            """, unsafe_allow_html=True)
+
+            # Contenedor del chat con auto-scroll
+            with st.container(height=400):
+                st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+                
+                for interaccion in st.session_state.chatbot['historial']:
+                    if interaccion['tipo'] == 'usuario':
+                        st.markdown(f'<div class="user-message">Tú: {interaccion["contenido"]}</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="bot-message">Asistente 360: {interaccion["contenido"]}</div>', unsafe_allow_html=True)
+                
+                st.markdown("""
+                    <script>
+                        window.parent.document.querySelector('section[data-testid="stVerticalBlock"]').scrollTo(0, 999999);
+                    </script>
+                """, unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # Mostrar menú actual
+            menu_actual = menus[st.session_state.chatbot['menu_actual']]
+            st.markdown(f'**{menu_actual["titulo"]}**')
+            
+            cols = st.columns(2)
+            current_col = 0
+            for opcion, detalle in menu_actual['opciones'].items():
+                with cols[current_col]:
+                    st.markdown(f"**{opcion}.** {detalle['texto']}")
+                    current_col = (current_col + 1) % 2
+
+            # Manejar entrada de usuario
+            with st.form("chat_form", clear_on_submit=True):
+                user_input = st.text_input("Escriba el número de la opción:", key="chat_input")
+                enviado = st.form_submit_button("Enviar ➤")
+                
+                if enviado and user_input:
+                    # Registrar pregunta del usuario
+                    st.session_state.chatbot['historial'].append({
+                        'tipo': 'usuario',
+                        'contenido': user_input
+                    })
+                    
+                    # Procesar opción seleccionada
+                    opciones_validas = menu_actual['opciones']
+                    
+                    if user_input in opciones_validas:
+                        accion = opciones_validas[user_input]['accion']
+                        
+                        if accion == 'menu':
+                            nuevo_menu = opciones_validas[user_input]['destino']
+                            st.session_state.chatbot['menu_actual'] = nuevo_menu
+                            respuesta = f" >> Navegando a {nuevo_menu.capitalize()}"
+                        else:
+                            respuesta = opciones_validas[user_input]['texto_respuesta']
+                        
+                        # Registrar respuesta del sistema
+                        st.session_state.chatbot['historial'].append({
+                            'tipo': 'sistema',
+                            'contenido': respuesta
+                        })
+                        
+                    else:
+                        error_msg = "⚠️ Opción no válida. Por favor seleccione una de las opciones mostradas."
+                        st.session_state.chatbot['historial'].append({
+                            'tipo': 'sistema',
+                            'contenido': error_msg
+                        })
+                    
+                    # Limpiar input correctamente
+                    if "chat_input" in st.session_state:
+                        del st.session_state.chat_input
+                    st.rerun()
 
         elif pestaña == "Módulo 3":
             st.subheader("Módulo 3")
