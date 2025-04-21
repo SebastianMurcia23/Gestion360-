@@ -15,7 +15,7 @@ def mock_video_capture():
 
 def test_capturar_rostro_exitoso(mock_video_capture):
     # Crear una imagen con un rostro
-    test_image = face_recognition.load_image_file("tests/test_imagenes/persona.jfif")  # Usa una imagen real o genera una
+    test_image = face_recognition.load_image_file("tests/test_imagenes/persona.jfif") 
     mock_video_capture.read.return_value = (True, test_image)
     
     with patch("cv2.VideoCapture", return_value=mock_video_capture):
