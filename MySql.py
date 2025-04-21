@@ -5,14 +5,20 @@ import face_recognition
 class BaseDeDatos:
     def __init__(self):
         self.conexion = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="Sebastian0423.",
-            port=3306
-        )
+        host="gestion360.ctc0io2scw9l.us-east-2.rds.amazonaws.com",
+        user="admin",
+        password="Gestion3601234",
+        database="gestion360",
+        port=3306,
+        ssl_ca='rds-combined-ca-bundle.pem'  # Opcional, pero recomendado
+    )
+        
+
+
+        
         self.cursor = self.conexion.cursor()
-        self.cursor.execute("CREATE DATABASE IF NOT EXISTS reconocimiento_facial")
-        self.cursor.execute("USE reconocimiento_facial")
+        self.cursor.execute("CREATE DATABASE IF NOT EXISTS gestion360")
+        self.cursor.execute("USE gestion360")
         self.crear_tabla()
 
     def crear_tabla(self):
