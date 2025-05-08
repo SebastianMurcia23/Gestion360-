@@ -6,8 +6,3 @@ mysql-connector-python
 gTTS
 SpeechRecognition
 streamlit-mic-recorder
-pyttsx3
-pyfiglet
-termcolor
-python-dotenv
-protobuf 
