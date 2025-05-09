@@ -6,8 +6,8 @@ from datetime import datetime
 class BaseDeDatos:
     def __init__(self):
         self.conexion = mysql.connector.connect(
-            host="localhost",
-            user="root",
+            host="gestion.ctc0io2scw9l.us-east-2.rds.amazonaws.com",
+            user="admin",
             password="Sebastian0423.",
             port=3306
         )
