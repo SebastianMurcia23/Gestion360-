@@ -1,13 +1,13 @@
 streamlit
 opencv-python-headless
 numpy
-# Reemplazamos face-recognition y sus dependencias con versiones pre-compiladas
-dlib-binary>=19.22.99
-face-recognition-models>=0.3.0
-face-recognition>=1.3.0
+face-recognition
 mysql-connector-python
 gTTS
 SpeechRecognition
 streamlit-mic-recorder
-# Agregando explícitamente las dependencias para evitar problemas de compilación
-pillow
+pyttsx3
+pyfiglet
+termcolor
+python-dotenv
+protobuf 

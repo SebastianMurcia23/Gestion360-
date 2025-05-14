@@ -6,8 +6,8 @@ from datetime import datetime
 class BaseDeDatos:
     def __init__(self):
         self.conexion = mysql.connector.connect(
-            host="gestion.ctc0io2scw9l.us-east-2.rds.amazonaws.com",
-            user="admin",
+            host="localhost",
+            user="root",
             password="Sebastian0423.",
             port=3306
         )
@@ -261,3 +261,176 @@ class BaseDeDatos:
         except mysql.connector.Error as err:
             print(f"Error al eliminar usuario: {err}")
             return str(err)
+        
+def calcular_nomina_usuario(self, num_doc, fecha_inicio, fecha_fin, valor_hora=10000):
+    """Calcula la nómina para un usuario en un período específico"""
+    try:
+        # Obtenemos los turnos del usuario en el período seleccionado
+        query = """
+        SELECT hora_entrada, hora_salida, duracion 
+        FROM registro_turnos 
+        WHERE numero_documento = %s 
+        AND hora_entrada BETWEEN %s AND %s
+        AND hora_salida IS NOT NULL
+        ORDER BY hora_entrada DESC
+        """
+        self.cursor.execute(query, (num_doc, fecha_inicio, fecha_fin))
+        turnos = self.cursor.fetchall()
+        
+        # Información del usuario
+        query_usuario = "SELECT nombre, tipo_documento FROM usuarios WHERE numero_documento = %s"
+        self.cursor.execute(query_usuario, (num_doc,))
+        info_usuario = self.cursor.fetchone()
+        
+        if not info_usuario:
+            return None
+        
+        nombre_usuario, tipo_doc = info_usuario
+        
+        # Datos para la nómina
+        total_horas = 0
+        detalles_turnos = []
+        
+        for entrada, salida, duracion in turnos:
+            # Convertir a datetime si no lo son ya
+            if isinstance(entrada, str):
+                entrada_dt = datetime.strptime(entrada, '%Y-%m-%d %H:%M:%S')
+            else:
+                entrada_dt = entrada
+                
+            if isinstance(salida, str):
+                salida_dt = datetime.strptime(salida, '%Y-%m-%d %H:%M:%S')
+            else:
+                salida_dt = salida
+            
+            # Calcular horas trabajadas
+            diff = salida_dt - entrada_dt
+            horas = diff.total_seconds() / 3600  # Convertir segundos a horas
+            total_horas += horas
+            
+            detalles_turnos.append({
+                'fecha': entrada_dt.strftime('%Y-%m-%d'),
+                'entrada': entrada_dt.strftime('%H:%M'),
+                'salida': salida_dt.strftime('%H:%M'),
+                'horas': round(horas, 2),
+                'valor': int(horas * valor_hora)
+            })
+        
+        # Calcular totales
+        subtotal = total_horas * valor_hora
+        salud = subtotal * 0.04  # 4% para salud
+        pension = subtotal * 0.04  # 4% para pensión
+        total = subtotal - salud - pension
+        
+        return {
+            'nombre': nombre_usuario,
+            'documento': f"{tipo_doc}: {num_doc}",
+            'periodo': f"{fecha_inicio} al {fecha_fin}",
+            'turnos': detalles_turnos,
+            'total_horas': round(total_horas, 2),
+            'valor_hora': valor_hora,
+            'subtotal': int(subtotal),
+            'salud': int(salud),
+            'pension': int(pension),
+            'total': int(total)
+        }
+    except Exception as e:
+        print(f"Error al calcular nómina: {e}")
+        return None
+
+def obtener_usuarios_para_nomina(self):
+    """Obtiene la lista de usuarios que tienen registros de turnos"""
+    try:
+        query = """
+        SELECT DISTINCT u.numero_documento, u.nombre 
+        FROM usuarios u
+        INNER JOIN registro_turnos t ON u.numero_documento = t.numero_documento
+        WHERE t.hora_salida IS NOT NULL
+        ORDER BY u.nombre
+        """
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+    except Exception as e:
+        print(f"Error al obtener usuarios para nómina: {e}")
+        return []
+        
+def guardar_nomina(self, datos_nomina):
+    """Guarda un registro de nómina en la base de datos"""
+    try:
+        # Crear tabla si no existe
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS nominas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            numero_documento VARCHAR(50),
+            nombre_usuario VARCHAR(100),
+            fecha_inicio DATE,
+            fecha_fin DATE,
+            total_horas FLOAT,
+            valor_hora INT,
+            subtotal INT,
+            descuento_salud INT,
+            descuento_pension INT,
+            total INT,
+            fecha_generacion DATETIME,
+            FOREIGN KEY (numero_documento) REFERENCES usuarios(numero_documento)
+        )
+        """)
+        self.conexion.commit()
+        
+        # Insertar registro
+        query = """
+        INSERT INTO nominas (
+            numero_documento, nombre_usuario, fecha_inicio, fecha_fin,
+            total_horas, valor_hora, subtotal, descuento_salud,
+            descuento_pension, total, fecha_generacion
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        values = (
+            datos_nomina['documento'].split(': ')[1],
+            datos_nomina['nombre'],
+            datos_nomina['periodo'].split(' al ')[0],
+            datos_nomina['periodo'].split(' al ')[1],
+            datos_nomina['total_horas'],
+            datos_nomina['valor_hora'],
+            datos_nomina['subtotal'],
+            datos_nomina['salud'],
+            datos_nomina['pension'],
+            datos_nomina['total'],
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        )
+        
+        self.cursor.execute(query, values)
+        self.conexion.commit()
+        return self.cursor.lastrowid
+    except Exception as e:
+        print(f"Error al guardar nómina: {e}")
+        return None
+        
+def obtener_nominas(self):
+    """Obtiene todas las nóminas generadas"""
+    try:
+        query = """
+        SELECT id, nombre_usuario, numero_documento, 
+               fecha_inicio, fecha_fin, total_horas, 
+               valor_hora, total, fecha_generacion
+        FROM nominas
+        ORDER BY fecha_generacion DESC
+        """
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+    except Exception as e:
+        print(f"Error al obtener nóminas: {e}")
+        return []
+
+def obtener_detalle_nomina(self, id_nomina):
+    """Obtiene el detalle completo de una nómina específica"""
+    try:
+        query = """
+        SELECT * FROM nominas WHERE id = %s
+        """
+        self.cursor.execute(query, (id_nomina,))
+        return self.cursor.fetchone()
+    except Exception as e:
+        print(f"Error al obtener detalle de nómina: {e}")
+        return None
