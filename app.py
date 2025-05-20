@@ -7,6 +7,12 @@ from io import BytesIO
 import speech_recognition as sr
 from streamlit_mic_recorder import mic_recorder
 from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+import base64
 st.set_page_config(page_title="Gestión360 ", page_icon="😎", layout="centered")
 
 st.markdown("""
@@ -639,6 +645,7 @@ else:
                         subtotal = total_horas * valor_hora
                         salud = subtotal * 0.04  # 4% para salud
                         pension = subtotal * 0.04  # 4% para pensión
+                        recargos_nocturnos = valor_hora / 0.35 # 35% para los recargos nocturnos despues de las 9pm
                         total = subtotal - salud - pension
                         
                         return {
@@ -651,6 +658,7 @@ else:
                             'subtotal': int(subtotal),
                             'salud': int(salud),
                             'pension': int(pension),
+                            'recargos_nocturnos': int(recargos_nocturnos),
                             'total': int(total)
                         }
                     except Exception as e:
@@ -900,12 +908,133 @@ else:
                                     # Opción para descargar como PDF (simulado)
                                     col1, col2 = st.columns(2)
                                     with col1:
+                                        def generar_pdf_nomina(nomina):
+                                            """Genera un PDF real con los datos de la nómina"""
+                                            # Crear un buffer en memoria para el PDF
+                                            buffer = BytesIO()
+                                            
+                                            # Crear el documento PDF
+                                            doc = SimpleDocTemplate(buffer, pagesize=letter, 
+                                                                rightMargin=72, leftMargin=72,
+                                                                topMargin=72, bottomMargin=18)
+                                            
+                                            # Estilos para el documento
+                                            styles = getSampleStyleSheet()
+                                            styles.add(ParagraphStyle(name='Centered', alignment=TA_CENTER, fontSize=14, fontName='Helvetica-Bold'))
+                                            styles.add(ParagraphStyle(name='Right', alignment=TA_RIGHT))
+                                            
+                                            # Contenido del documento
+                                            contenido = []
+                                            
+                                            # Título
+                                            titulo = Paragraph("<font size=16>DESPRENDIBLE DE PAGO</font>", styles["Centered"])
+                                            contenido.append(titulo)
+                                            contenido.append(Spacer(1, 12))
+                                            
+                                            # Período
+                                            periodo = Paragraph(f"<b>Período:</b> {nomina['periodo']}", styles["Centered"])
+                                            contenido.append(periodo)
+                                            contenido.append(Spacer(1, 20))
+                                            
+                                            # Información del empleado
+                                            contenido.append(Paragraph("<b>Información del Empleado</b>", styles["Heading2"]))
+                                            contenido.append(Spacer(1, 6))
+                                            
+                                            info_empleado = [
+                                                [Paragraph("<b>Nombre:</b>", styles["Normal"]), nomina['nombre']],
+                                                [Paragraph("<b>Documento:</b>", styles["Normal"]), nomina['documento']]
+                                            ]
+                                            
+                                            tabla_info = Table(info_empleado, colWidths=[120, 350])
+                                            tabla_info.setStyle(TableStyle([
+                                                ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+                                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                                                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                                                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                                ('PADDING', (0, 0), (-1, -1), 6),
+                                            ]))
+                                            
+                                            contenido.append(tabla_info)
+                                            contenido.append(Spacer(1, 20))
+                                            
+                                            # Detalle de turnos
+                                            contenido.append(Paragraph("<b>Detalle de Turnos</b>", styles["Heading2"]))
+                                            contenido.append(Spacer(1, 6))
+                                            
+                                            # Cabecera de la tabla
+                                            datos_turnos = [["Fecha", "Entrada", "Salida", "Horas", "Valor (COP)"]]
+                                            
+                                            # Agregar datos de turnos
+                                            for turno in nomina['turnos']:
+                                                datos_turnos.append([
+                                                    turno['fecha'],
+                                                    turno['entrada'],
+                                                    turno['salida'],
+                                                    str(turno['horas']),
+                                                    f"${turno['valor']:,.0f}"
+                                                ])
+                                            
+                                            # Crear tabla de turnos
+                                            tabla_turnos = Table(datos_turnos, colWidths=[80, 80, 80, 80, 120])
+                                            tabla_turnos.setStyle(TableStyle([
+                                                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                                                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                                                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                                                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                                ('PADDING', (0, 0), (-1, -1), 6),
+                                            ]))
+                                            
+                                            contenido.append(tabla_turnos)
+                                            contenido.append(Spacer(1, 20))
+                                            
+                                            # Resumen de pago
+                                            contenido.append(Paragraph("<b>Resumen de Pago</b>", styles["Heading2"]))
+                                            contenido.append(Spacer(1, 6))
+                                            
+                                            resumen_pago = [
+                                                ["Total Horas:", f"{nomina['total_horas']}"],
+                                                ["Valor por Hora:", f"${nomina['valor_hora']:,.0f}"],
+                                                ["Subtotal:", f"${nomina['subtotal']:,.0f}"],
+                                                ["Descuento Salud (4%):", f"-${nomina['salud']:,.0f}"],
+                                                ["Descuento Pensión (4%):", f"-${nomina['pension']:,.0f}"],
+                                                ["Total a Pagar:", f"${nomina['total']:,.0f}"]
+                                            ]
+                                            
+                                            tabla_resumen = Table(resumen_pago, colWidths=[200, 200])
+                                            tabla_resumen.setStyle(TableStyle([
+                                                ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+                                                ('BACKGROUND', (1, -1), (1, -1), colors.lightgreen),
+                                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                                                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                                                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                                ('PADDING', (0, 0), (-1, -1), 6),
+                                                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+                                            ]))
+                                            
+                                            contenido.append(tabla_resumen)
+                                            contenido.append(Spacer(1, 30))
+                                            
+                                            # Pie de página
+                                            fecha_generacion = datetime.now().strftime('%Y-%m-%d %H:%M')
+                                            pie = Paragraph(f"Generado por: Sistema Gestión360 - Fecha: {fecha_generacion}", styles["Normal"])
+                                            contenido.append(pie)
+                                            
+                                            # Construir el PDF
+                                            doc.build(contenido)
+                                            
+                                            # Obtener el valor del PDF generado y codificarlo en base64
+                                            pdf = buffer.getvalue()
+                                            buffer.close()
+                                            
+                                            return pdf
+                                        pdf_data = generar_pdf_nomina(nomina)
                                         st.download_button(
                                             label="⬇️ Descargar PDF",
-                                            data="Simulación de descarga de PDF",
+                                            data=pdf_data,
                                             file_name=f"nomina_{nomina['nombre']}_{fecha_inicio_str}_{fecha_fin_str}.pdf",
-                                            mime="application/pdf",
-                                            help="Esta es una simulación de descarga. Para implementar la generación real de PDF, se necesitaría una librería adicional."
+                                            mime="application/pdf"
                                         )
                                     with col2:
                                         st.button("📧 Enviar por correo", disabled=True, 
