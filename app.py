@@ -83,8 +83,8 @@ if not st.session_state.autenticado:
     
     with st.container():
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-        usuario = st.text_input("Usuario", key="user_input", value="admin")
-        contraseña = st.text_input("Contraseña", type="password", key="password_input",value="1234")
+        usuario = st.text_input("Usuario", key="user_input")
+        contraseña = st.text_input("Contraseña", type="password", key="password_input")
         
         # Botones en columnas
         col1, col2 = st.columns([3, 1])
