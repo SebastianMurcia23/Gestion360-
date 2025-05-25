@@ -13,6 +13,14 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 import base64
+import sentry_sdk
+
+# Configura Sentry (¡primero que todo!)
+sentry_sdk.init(
+    dsn="https://c2bc2f3344df5e541b137b53b6a834f0@o4509385850093568.ingest.us.sentry.io/4509385880829952",
+    send_default_pii=True,
+    traces_sample_rate=1.0
+)
 st.set_page_config(page_title="Gestión360 ", page_icon="😎", layout="centered")
 
 st.markdown("""

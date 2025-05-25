@@ -12,3 +12,4 @@ termcolor
 python-dotenv
 protobuf 
 python-dotenv
+graylog
