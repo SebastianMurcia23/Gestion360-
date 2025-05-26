@@ -14,6 +14,11 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 import base64
 import sentry_sdk
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 # Configura Sentry (¡primero que todo!)
 sentry_sdk.init(
@@ -763,6 +768,61 @@ else:
                 setattr(BaseDeDatos, 'obtener_usuarios_para_nomina', obtener_usuarios_para_nomina)
                 setattr(BaseDeDatos, 'guardar_nomina', guardar_nomina)
                 setattr(BaseDeDatos, 'obtener_nominas', obtener_nominas)
+                
+                def enviar_nomina_correo(self, email_destino, nomina_data, pdf_data):
+                    """Envía la nómina por correo electrónico"""
+                    try:
+                        # Configuración del servidor SMTP (Gmail ejemplo)
+                        smtp_server = "smtp.gmail.com"
+                        smtp_port = 587
+                        email_origen = "juansebastianrinconmurcia@gmail.com"  # Cambiar por tu email
+                        password = "thbm jwyx vchs uvel"  # Usar contraseña de aplicación
+                        
+                        # Crear mensaje
+                        msg = MIMEMultipart()
+                        msg['From'] = email_origen
+                        msg['To'] = email_destino
+                        msg['Subject'] = f"Desprendible de Nómina - {nomina_data['nombre']} - {nomina_data['periodo']}"
+                        
+                        # Cuerpo del correo
+                        cuerpo = f"""
+                        Estimado/a {nomina_data['nombre']},
+                        
+                        Adjuntamos su desprendible de nómina correspondiente al período {nomina_data['periodo']}.
+                        
+                        Resumen:
+                        - Total horas trabajadas: {nomina_data['total_horas']}
+                        - Valor por hora: ${nomina_data['valor_hora']:,.0f}
+                        - Total a pagar: ${nomina_data['total']:,.0f}
+                        
+                        Saludos cordiales,
+                        Sistema Gestión360
+                        """
+                        
+                        msg.attach(MIMEText(cuerpo, 'plain'))
+                        
+                        # Adjuntar PDF
+                        adjunto = MIMEBase('application', 'octet-stream')
+                        adjunto.set_payload(pdf_data)
+                        encoders.encode_base64(adjunto)
+                        adjunto.add_header(
+                            'Content-Disposition',
+                            f'attachment; filename=nomina_{nomina_data["nombre"]}_{nomina_data["periodo"]}.pdf'
+                        )
+                        msg.attach(adjunto)
+                        
+                        # Enviar correo
+                        server = smtplib.SMTP(smtp_server, smtp_port)
+                        server.starttls()
+                        server.login(email_origen, password)
+                        server.send_message(msg)
+                        server.quit()
+                        
+                        return True
+                        
+                    except Exception as e:
+                        print(f"Error al enviar correo: {e}")
+                        return False
             
             # Interfaz de usuario para la nómina
             tabs = st.tabs(["Generar Nómina", "Historial"])
@@ -1045,8 +1105,22 @@ else:
                                             mime="application/pdf"
                                         )
                                     with col2:
-                                        st.button("📧 Enviar por correo", disabled=True, 
-                                                help="Función de envío por correo no implementada. Requiere configuración adicional.")
+                                        email_input = st.text_input("Correo electrónico:", 
+                                                                placeholder="empleado@empresa.com",
+                                                                help="Ingrese el email donde enviar la nómina")
+                                        
+                                        if st.button("📧 Enviar por correo"):
+                                            if email_input and "@" in email_input:
+                                                with st.spinner("Enviando correo..."):
+                                                    pdf_data = generar_pdf_nomina(nomina)
+                                                    exito = enviar_nomina_correo(email_input, nomina, pdf_data)
+                                                    
+                                                    if exito:
+                                                        st.success(f"✅ Nómina enviada exitosamente a {email_input}")
+                                                    else:
+                                                        st.error("❌ Error al enviar el correo. Verifique la configuración.")
+                                            else:
+                                                st.warning("⚠️ Ingrese un correo electrónico válido")
                                 
                                 elif nomina and not nomina['turnos']:
                                     st.warning(f"No se encontraron turnos para {nomina['nombre']} en el período seleccionado.")
